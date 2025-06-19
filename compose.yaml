@@ -6,7 +6,7 @@ services:
     ports:
       - '5432:5432'
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "user_service_user" ]
+      test: [ "CMD", "pg_isready", "-U", "user_service_user", "-d", "user_service_prod" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -19,8 +19,29 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - backend
+
+  redis:
+    image: 'redis:8.0'
+    container_name: "redis"
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    command: ["redis-server", "--requirepass", "${USER_SERVICE_REDIS_PASSWORD}"]
+    volumes:
+      - redisdata:/data
+    networks:
+      - backend
+
 volumes:
   pgdata:
+  redisdata:
+
 networks:
   backend:
     driver: bridge
